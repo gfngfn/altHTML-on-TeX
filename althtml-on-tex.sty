@@ -1,0 +1,107 @@
+%%
+%% This is file `gfnlf.sty',
+%% a LaTeX package for writing logical formulae in structurized style.
+%%
+%% Copyright 2015 gfn (Takashi SUWA)
+%%      Email (Private) : b d . g f n g f n ( a t m a r k ) g m a i l . c o m
+%%               GitHub : https://github.com/gfngfn
+%%
+\NeedsTeXFormat{LaTeX2e}[1994/12/01]% LaTeX date must be December 1994 or later
+\ProvidesPackage{althtml-on-tex}[2015/03/09 gfn (Takashi SUWA)]
+%
+\newcount\wrhtml@depth
+\newcount\wrhtml@tabnum
+\wrhtml@depth=0\relax
+\def\wrhtml@tab#1{%
+  \def#1{}%
+  \wrhtml@tabnum=\wrhtml@depth
+  \wrhtml@subtab#1\wrhtml@tabnum
+}
+\def\wrhtml@subtab#1#2{%
+  \ifnum#2=0\relax
+  \else
+    \expandafter\def\expandafter#1\expandafter{#1 }%
+    \expandafter\def\expandafter#1\expandafter{#1 }%
+    \advance#2by-1\relax
+    \wrhtml@subtab#1#2%
+  \fi
+}
+\def\wrhtml@ifempty#1#2#3{%
+  \def\tempcsC{#1}%
+  \ifx\tempcsC\empty
+    #2%
+  \else
+    #3%
+  \fi
+}
+\def\wrhtml@taglist{}
+\def\wrhtml@ifexistinlist#1#2#3{%
+  \expandafter\wrhtml@subifexistinlist\wrhtml@taglist\wrhtml@punct{#1}{#2}{#3}%
+}
+\def\wrhtml@subifexistinlist#1#2\wrhtml@punct#3#4#5{%
+  \def\wrhtml@tempcsA{#3}%
+  \def\wrhtml@tempcsB{#1}%
+  \ifx\wrhtml@tempcsA\wrhtml@tempcsB
+    #4%
+  \else
+    \wrhtml@ifempty{#2}{%
+      #5%
+    }{%
+      \wrhtml@subifexistinlist#2\wrhtml@punct{#3}{#4}{#5}%
+    }%
+  \fi
+}
+\def\newtag#1#2#3{%
+  \expandafter\def\expandafter\wrhtml@taglist\expandafter{\wrhtml@taglist#1}%
+  \def#1##1{%
+    \wrhtml@tab\spaces
+    \wrhtml@writeline{\spaces#2}%
+    \advance\wrhtml@depth by1\relax
+      \wrhtml@tab\spaces
+      \wrhtml@readstring{##1}%
+    \advance\wrhtml@depth by-1\relax
+    \wrhtml@tab\spaces
+    \wrhtml@writeline{\spaces#3}%
+  }%
+}
+\def\wrhtml@readstring#1{%
+  \wrhtml@subreadstring#1\empty\empty\wrhtml@punct\wrhtml@punct
+}
+\def\wrhtml@subreadstring#1#2#3\wrhtml@punct#4\wrhtml@punct{%
+  \wrhtml@ifexistinlist{#1}{%
+  %(if #1 is a tag token)
+    \wrhtml@writeline{\spaces#4}%
+    #1{#2}%
+    \wrhtml@subreadstring#3\wrhtml@punct\wrhtml@punct
+  }{%
+  %(if #1 is not a tag token)
+    \wrhtml@ifempty{#3}{%
+      \wrhtml@writeline{\spaces#4#1#2}%
+    }{%
+      \wrhtml@subreadstring#2#3\wrhtml@punct#4#1\wrhtml@punct
+    }%
+  }%
+}
+\def\wrhtml@setoutput#1{%
+  \newwrite\tempfile
+  \immediate\openout\tempfile=#1\relax
+}
+\def\wrhtml@writeline#1{\immediate\write\tempfile{#1}}
+\def\wrhtml@closefile{\immediate\closeout\tempfile}
+\def\writehtml#1#2{
+  \def\spaces{}%
+  \wrhtml@setoutput{#1}%
+  \wrhtml@readstring{#2}%
+  \wrhtml@closefile
+}
+%
+\newtag\htmlja{<html lang='ja'>}{</html>}
+\newtag\head{<head>}{</head>}
+\newtag\body{<body>}{</body>}
+\newtag\div{<div>}{</div>}
+\newtag\span{<span>}{</span>}
+\newtag\parag{<p>}{</p>}
+\newtag\imgsrc{<img src="}{" />}
+\newtag\hi{<h1>}{</h1>}
+\newtag\hii{<h2>}{</h2>}
+\newtag\hiii{<h3>}{</h3>}
